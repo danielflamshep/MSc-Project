@@ -29,8 +29,8 @@ class DataLoader:
         self.ground_vars = ['TS', 'SWGDN']
         self.level_vars = ['T', 'U', 'V', 'QV', 'P', 'PT', 'UV']
         self.grad_vars = ['U', 'V', 'PT', 'UV']
-        self.all_level_vars = [var + str(i) for var in self.level_vars for i in range(15)]
-        self.all_grad_vars = [var + 'G' + str(i) for var in self.grad_vars for i in range(1, 14)]
+        self.all_level_vars = [var+str(i) for var in self.level_vars for i in range(15)]
+        self.all_grad_vars = [var+'G'+str(i) for var in self.grad_vars for i in range(1, 14)]
         self.height_level_vars = [var + str(height) for var in self.level_vars]
         self.height_grad_vars = [var + 'G' + str(grad_height) for var in self.grad_vars]
         self.vars = self.ground_vars + self.all_level_vars + self.all_grad_vars
@@ -48,6 +48,8 @@ class DataLoader:
             data[date + 'P0'] = data[date + 'PS']
             data[date + 'UV0'] = data[date + 'U0'] ** 2 + data[date + 'V0'] ** 2
             data[date + 'PT0'] = data[date + 'T0'] * (P_0 / data[date + 'P0']) ** 0.286
+            data[date + 'PTV0'] = (1-r* data[date+'QV0'])*data[date + 'PT0']
+
             for lvl in range(1, len(heights)-1):
 
                 h = heights[lvl - 1] - heights[lvl]
@@ -157,27 +159,34 @@ class DataLoader:
 
         self.data = data
 
-    def check_pblh(self):
+    def check_pblh(self, Ric=0.3):
+        data=self.data
         g = 9.81 # mixing ratio
-        lvls = range(1, len(self.heights)-1)
+        lvls = range(1, len(self.heights)-2)
         for date, lvl in product(self.dates, lvls):
-            PTV = self.data[date+'PTV'+str(lvl)]
-            PTVG = self.data[date+'PTVG'+str(lvl)]
-            UVG = self.data[date+'UVG'+str(lvl)]
-            RI = (g/PTV)*PTVG/UVG
-            RIc = RI > 0.3
-
-            self.data[date+'RIc'+str(lvl)] = RIc
+            PTV = data[date+'PTV'+str(lvl)]
+            PTVG = data[date+'PTVG'+str(lvl)]
+            UVG = data[date+'UVG'+str(lvl)]
+            RI = (g*PTVG)/(PTV*UVG)
+            RIc = RI > Ric
+            if date =='201406':
+                print(date+str(lvl)+'PTV+PTVG+UVG',
+                np.mean(PTV),np.mean(PTVG),np.mean(UVG))
+            data[date+'RIc'+str(lvl)] = RIc
 
         for date in self.dates:
-            list_Ric = [self.data[date+'RIc'+str(lvl)][:, None] for lvl in lvls]
+            list_Ric = [data[date+'RIc'+str(lvl)][:, None] for lvl in lvls]
             RIc = np.concatenate(list_Ric, axis=1).T  # shape LVL x HRS
-
+            print(RIc.shape[0])
             for i, j in product(range(RIc.shape[0]), range(RIc.shape[1])):
                 if RIc[i, j]:
+                    print(date+' level '+str(i)+' day = {} hour= {}'.format(j/8, j%8 ))
                     RIc[i, j] = self.heights[i]
             PBLH_check = np.min(RIc, axis=0)
-            self.data[date + 'PBLHc'] = PBLH_check
+            if date =='201406':
+                print(PBLH_check)
+            data[date + 'PBLHc'] = PBLH_check
+        self.data=data
 
     def load_data(self, train, test, input_vars=None, interpolation=0, plot=False, plot_dir=None):
         # train and test of form train = [[2013,5,6,7],[2014,5,6,7]]
@@ -261,7 +270,8 @@ class DataLoader:
 
         return x_train, y_train, x_test, y_test
 
-    def plot_time_series(self, dates, plot_vars=None, plot_dir=None, num=0):
+    def plot_time_series(self, dates, plot_vars=None, plot_dir=None,
+                            plot_pblh=False, num=0):
 
         plot_vars = self.vars if plot_vars is None else plot_vars
 
@@ -280,33 +290,32 @@ class DataLoader:
 
             time = np.arange(self.data[date + var].shape[0])
             time_series = self.data[date + var]
-
-            pblh_time = np.arange(self.data[date + 'PBLH'].shape[0])
-            pblh_time_series = self.data[date + 'PBLH']
-
-            pearson_corr = np.corrcoef(time_series, pblh_time_series)[0, 1]
-
             plt.scatter(time, time_series, c='b', marker='x')
-            #plt.scatter(pblh_time, pblh_time_series, c='r', marker='x')
-
             plt.plot(time, time_series, 'b', lw=1, label=var)
-            #plt.plot(pblh_time, pblh_time_series, 'r', lw=1, label='PBLH')
+            print('plotted : ' + date + var + ' with ')
 
+            if plot_pblh:
+                pblh_time = np.arange(self.data[date + 'PBLH'].shape[0])
+                pblh_time_series = self.data[date + 'PBLH']
+                plt.plot(pblh_time, pblh_time_series, 'r', lw=1, label='PBLH')
+                plt.scatter(pblh_time, pblh_time_series, c='r', marker='x')
+                pearson_corr = np.corrcoef(time_series, pblh_time_series)[0, 1]
+                plt.suptitle('pear_corr : ' + str(pearson_corr))
+                print('plotted : ' + date + var + ' with ')
+                print('# of PBLH < 100 m = ', sum(pblh_time_series < 0.100))
             plt.xlabel(date)
             plt.ylabel(var)
             plt.legend()
             plt.title('Time Series on ' + date + ' for ' + var)
-            plt.suptitle('pear_corr : ' + str(pearson_corr))
-
             plt.savefig(os.path.join(save_dir, self.ignore+'TS' + date + var + '.jpg'))
 
-            print('plotted : ' + date + var + ' with '
-                  'pear_corr : ' + str(pearson_corr))
-        print('PBLH data less than 100 m', sum(pblh_time_series < 0.100))
+
 
 if __name__ == '__main__':
     scale = 'none'
     ignore = 'none'
+    vars = ['RIc' +str(lvl) for lvl in range(1,14)]
     DL = DataLoader(scale=scale, ignore=None)
-    DL.plot_time_series(dates=[[2014, 6]], plot_vars=['PTG1','UG1','VG1','UVG1'], num=35)
+    DL.check_pblh()
+    DL.plot_time_series(dates=[[2014, 6]], plot_vars=vars, num=1)
     # DL.load_data(train=[[2014,5,6]], test=[[2014,7]], interpolation=5)
