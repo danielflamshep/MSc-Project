@@ -52,10 +52,12 @@ class DataLoader:
 
             for lvl in range(1, len(heights)-1):
 
-                h = heights[lvl - 1] - heights[lvl]
+                h = (heights[lvl - 1] - heights[lvl])*1e3
                 T_ave = 0.5 * (data[date + 'T' + str(lvl - 1)] + data[date + 'T' + str(lvl)])
                 P_lower_level = data[date + 'P' + str(lvl - 1)]
-                data[date + 'P' + str(lvl)] = P_lower_level * np.exp(g * h / gas_const / T_ave)
+                exp_ratio = np.exp(g * h / gas_const / T_ave)
+                print(date+str(lvl)+'e^(gh/RT)=', exp_ratio)
+                data[date + 'P' + str(lvl)] = P_lower_level *exp_ratio
 
                 U_level, V_level = data[date + 'U' + str(lvl)], data[date + 'V' + str(lvl)]
                 data[date + 'UV' + str(lvl)] = U_level ** 2 + V_level ** 2
@@ -159,7 +161,7 @@ class DataLoader:
 
         self.data = data
 
-    def check_pblh(self, Ric=0.3):
+    def check_pblh(self, Ric=0.21):
         data=self.data
         g = 9.81 # mixing ratio
         lvls = range(1, len(self.heights)-2)
@@ -168,25 +170,25 @@ class DataLoader:
             PTVG = data[date+'PTVG'+str(lvl)]
             UVG = data[date+'UVG'+str(lvl)]
             RI = (g*PTVG)/(PTV*UVG)
-            RIc = RI > Ric
-            if date =='201406':
-                print(date+str(lvl)+'PTV+PTVG+UVG',
-                np.mean(PTV),np.mean(PTVG),np.mean(UVG))
-            data[date+'RIc'+str(lvl)] = RIc
+            data[date+'RIc'+str(lvl)] = RI
 
         for date in self.dates:
             list_Ric = [data[date+'RIc'+str(lvl)][:, None] for lvl in lvls]
             RIc = np.concatenate(list_Ric, axis=1).T  # shape LVL x HRS
-            print(RIc.shape[0])
-            for i, j in product(range(RIc.shape[0]), range(RIc.shape[1])):
-                if RIc[i, j]:
-                    print(date+' level '+str(i)+' day = {} hour= {}'.format(j/8, j%8 ))
-                    RIc[i, j] = self.heights[i]
-            PBLH_check = np.min(RIc, axis=0)
-            if date =='201406':
-                print(PBLH_check)
-            data[date + 'PBLHc'] = PBLH_check
-        self.data=data
+            print(RIc.shape)
+            hr=24
+            print('hr 1 : ', RIc[:, 0])
+            PBLHc = np.zeros(RIc.shape[1])
+            levels = reversed(range(RIc.shape[0]))  # from higher to lower levels
+            hours = range(RIc.shape[1])
+            for level, hour in product(levels, hours):
+                if RIc[level, hour] > Ric:
+                    print(date+' level '+str(level)+' day = {} hour= {}'.format(hour // 8, hour % 8))
+                    PBLHc[hour] = self.heights[level]
+            if date == '201406':
+                print(PBLHc)
+            data[date + 'PBLHc'] = PBLHc
+        self.data = data
 
     def load_data(self, train, test, input_vars=None, interpolation=0, plot=False, plot_dir=None):
         # train and test of form train = [[2013,5,6,7],[2014,5,6,7]]
@@ -315,6 +317,7 @@ if __name__ == '__main__':
     scale = 'none'
     ignore = 'none'
     vars = ['RIc' +str(lvl) for lvl in range(1,14)]
+    vars += ['P' +str(lvl) for lvl in range(1,14)] +['PBLH', 'PBLHc']
     DL = DataLoader(scale=scale, ignore=None)
     DL.check_pblh()
     DL.plot_time_series(dates=[[2014, 6]], plot_vars=vars, num=1)
