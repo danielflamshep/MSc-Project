@@ -40,6 +40,7 @@ def create_data():
         data_dict[date+'PBLH'] = pblh
         data_dict[date+'TIME'] = time
         data_dict[date+'QUAL'] = quality
+    np.savez_compressed('E:\Daniel\Documents\GitHub\MSc-Project\data\pblh', data_dict)
 
 
 def string_with_zero(y):
@@ -121,5 +122,4 @@ def get_inputs():
             data_dict[dates[i]+var] = dsplit[i]
 
 
-get_inputs()
-
+create_data()

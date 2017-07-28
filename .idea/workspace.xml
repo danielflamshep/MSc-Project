@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="58542b56-a48c-47d0-b6e8-c2c79ab10d53" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc13.jpg" afterPath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc13.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc5.jpg" afterPath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc5.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc6.jpg" afterPath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc6.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc7.jpg" afterPath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc7.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc8.jpg" afterPath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc8.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc9.jpg" afterPath="$PROJECT_DIR$/plots/timeseries/none_scale_1/noneTS201406RIc9.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/loading.py" afterPath="$PROJECT_DIR$/loading.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dataloading.py" afterPath="$PROJECT_DIR$/dataloading.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -26,8 +20,8 @@
       <file leaf-file-name="dataloading.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dataloading.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="645">
-              <caret line="102" column="28" lean-forward="false" selection-start-line="102" selection-start-column="28" selection-end-line="102" selection-end-column="28" />
+            <state relative-caret-position="755">
+              <caret line="42" column="75" lean-forward="false" selection-start-line="42" selection-start-column="75" selection-end-line="42" selection-end-column="75" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -80,7 +74,6 @@
     </navigator>
     <panes>
       <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -95,6 +88,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -286,7 +280,7 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3298731" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.31084198" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" x="2534" y="717" width="1018" height="922" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.31084198" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" x="1603" y="1032" width="1018" height="922" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -326,6 +320,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/dataloading.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/util.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="88">
+          <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="8" selection-end-column="40" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/util.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="88">
@@ -336,8 +348,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/dataloading.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="645">
-          <caret line="102" column="28" lean-forward="false" selection-start-line="102" selection-start-column="28" selection-end-line="102" selection-end-column="28" />
+        <state relative-caret-position="755">
+          <caret line="42" column="75" lean-forward="false" selection-start-line="42" selection-start-column="75" selection-end-line="42" selection-end-column="75" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
