@@ -1,9 +1,7 @@
 import os
+import sys
 import numpy as np
 from netCDF4 import Dataset
-
-def convert_seconds(x):
-    pass
 
 
 def create_data():
@@ -19,11 +17,6 @@ def create_data():
         date = "".join(date[:3])
         dates[i] == date
         i += 1
-        #print(data[36])
-        #print(data[-1])
-
-        print(date)
-        print('quality: ', data[25].split()[80])
 
         quality = data[25].split()[80]
         data_list = [data[i].strip("\n").split(', ') for i in range(37, len(data))]
@@ -31,12 +24,13 @@ def create_data():
         data_array = data_array[~(data_array == 'NA').any(axis=1)]
         data_array = data_array[~(data_array == '    NA').any(axis=1)]
         data_array = data_array[~(data_array == '     NA').any(axis=1)]
-        # print('    NA' in data_array)
-        # print('NA' in data_array)
         data_array = data_array.astype('float')
         pblh = data_array[:, 2]
         time = data_array[:, :2].mean(axis=1)/60**2  # time in HRS
-        print('data match: ', time.shape[0] == pblh.shape[0])
+        mean_diff = np.mean(np.ediff1d(time))
+        print('{}| Q {} | obs {} from {:.3f}--{:.3f} | MD {:.3f} '.format(
+               date, quality, time.shape[0], time[0], time[-1], mean_diff))
+
         data_dict[date+'PBLH'] = pblh
         data_dict[date+'TIME'] = time
         data_dict[date+'QUAL'] = quality
@@ -80,7 +74,6 @@ def get_inputs():
 
     vars = {'hour': 'HR', 'tout_C': 'T', 'wspd_m_s': 'U',
             'sia_AU': 'SI', 'pout_hPa': 'P', 'hout_RH': 'QV'}
-
     data = Dataset(path_file)
     d = data.variables['prior_date_index'][:]
     year = data.variables['year'][:]
@@ -92,20 +85,21 @@ def get_inputs():
 
     for i in range(d.shape[0]-1):
         if d[i] != d[i+1]:
-            # print(d[i], d[i+1])
             day_idx.append(i+1)
             date = str(year[i]) + to_date(day[i], year[i])
             if len(day_idx) > 2:
-                hrs = hour[day_idx[-2]:day_idx[-1]].shape[0]
-                print('YR {} | day {} | OBS {} | idx {} | DATE {}'.format(
-                      year[i], day[i], hrs, i+1, date))
+                hrs = hour[day_idx[-2]:day_idx[-1]]
+                mean_diff = np.mean(np.ediff1d(hrs))
+                print('{} -- {} | OBS {} | {:.3f}--{:.3f} | mean diff {:.3f} '.format(
+                      date, day[i], hrs.shape[0], hrs[0], hrs[-1], mean_diff))
             dates.append(date)
 
         if i == d.shape[0]-2:
             date = str(year[i]) + to_date(day[i], year[i])
-            hrs = hour[day_idx[-2]:day_idx[-1]].shape[0]
-            print('YR {} | day {} | OBS {} | idx {} | DATE {}'.format(
-                  year[i], day[i], hrs, i+1, date))
+            hrs = hour[day_idx[-2]:day_idx[-1]]
+            mean_diff = np.mean(np.ediff1d(hrs))
+            print('{} -- {} | OBS {} | {:.3f}--{:.3f} | mean diff {:.3f} '.format(
+                  date, day[i], hrs.shape[0], hrs[0], hrs[-1], mean_diff))
             dates.append(date)
 
     print(dates[0], dates[-1])
@@ -122,4 +116,5 @@ def get_inputs():
             data_dict[dates[i]+var] = dsplit[i]
 
 
-create_data()
+sys.stdout = open("inputs_data.txt", "w")
+get_inputs()

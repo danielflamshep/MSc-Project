@@ -176,7 +176,7 @@ class DataLoader:
             list_Ric = [data[date+'RIc'+str(lvl)][:, None] for lvl in lvls]
             RIc = np.concatenate(list_Ric, axis=1).T  # shape LVL x HRS
             print(RIc.shape)
-            hr=24
+            hr = 24
             print('hr 1 : ', RIc[:, 0])
             PBLHc = np.zeros(RIc.shape[1])
             levels = reversed(range(RIc.shape[0]))  # from higher to lower levels
