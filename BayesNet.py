@@ -6,7 +6,7 @@ import autograd.numpy.random as npr
 
 from black_box_svi import black_box_variational_inference as bbvi
 from autograd.optimizers import adam
-from loading import DataLoader
+from loading_vers2 import DataLoader
 
 
 def construct_nn(layer_sizes, L2_reg, noise_variance, nonlinearity=np.tanh):
@@ -40,18 +40,20 @@ def construct_nn(layer_sizes, L2_reg, noise_variance, nonlinearity=np.tanh):
 
 
 if __name__ == '__main__':
-    train_mns = [[2014, 6]]
-    test_mns = [[2014, 7]]
-    dl = DataLoader(scale='maxmin', ignore='halfnight', height=5, grad_height=5)
-    ins = dl.height_grad_vars+dl.ground_vars+dl.height_level_vars+['TIME']
+
+
+    train_mns = [[2014, 9]]
+    test_mns = [[2014, 10]]
+    dl = DataLoader()
+    ins = dl.train_vars
     x_train, y_train, x_test, y_test = dl.load_data(train_mns, test_mns, input_vars=ins)
     x_dim = x_train.shape[1]
 
-    # Specify inference problem by its unnormalized log-posterior.
+
     rbf = lambda x: np.exp(-x**2)
     relu = lambda x: np.maximum(x, 0.)
 
-    num_weights, predictions, logprob = construct_nn(layer_sizes=[x_dim, 20, 1], L2_reg=0,
+    num_weights, predictions, logprob = construct_nn(layer_sizes=[x_dim, 36, 36, 1], L2_reg=0,
                                                      noise_variance=0.1, nonlinearity=rbf)
 
     log_posterior = lambda weights, t: logprob(weights,  x_train, y_train)
@@ -61,8 +63,6 @@ if __name__ == '__main__':
     fig, ax, bx = plotting.set_up()
 
     def callback(params, t, g):
-        print("Iteration {} lower bound {}".format(t, -objective(params, t)))
-
         # Sample functions from posterior.
 
         rs = npr.RandomState(0)
@@ -74,7 +74,12 @@ if __name__ == '__main__':
         p_test = outputs_test[:, :, 0].T
         plotting.plot_pblh(y_train, y_test, p_train, p_test, t, ax, bx)
 
-    # Initialize variational parameters
+        if t % 10 == 0 :
+            metric = np.mean(np.abs(y_test - p_test))
+            print("ITER {} MEAN PBLH DIFF {}".format(t, metric))
+
+
+
     rs = npr.RandomState(0)
     init_mean    = rs.randn(num_weights)
     init_log_std = -5 * np.ones(num_weights)

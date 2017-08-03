@@ -14,7 +14,7 @@ from util import to_date, to_string_nn
 
 class NeuralNet:
     def __init__(self, nn_arch, input_var, save_dir,
-                 lr=0.002, iterations=500, scale=1.0, seed=15,
+                 lr=0.005, iterations=1000, scale=1.0, seed=15,
                  activation=np.tanh,  plot=plotting.plot_pblh):
         self.nn_arch = nn_arch
         self.activation = activation
@@ -67,24 +67,24 @@ class NeuralNet:
 
         return
 
-if __name__ == '__main__':
-    train_mns = [[2014, 6]]
-    test_mns = [[2014, 7]]
-    scale = 'maxmin'
-    h = 5
-    ignore = 'allnight'
-    intrp = 100
-    dl = DataLoader(scale=scale, ignore=ignore, grad_height=h, height=h)
-    input_vars = dl.height_grad_vars+dl.ground_vars+['TIME']
-    if ignore is None: ignore = 'none'
-    arch = [len(input_vars), 100, 100, 1]
-
-    arch_dir = os.path.join(os.getcwd(), 'plots', 'new')+r'\\scale_'+scale +\
-                                                        '_ignore'+ignore + '_intrp_'+str(intrp)+\
-                                                        '_nn_'+to_string_nn(arch)
-
-    x_train, y_train, x_test, y_test = dl.load_data(train_mns, test_mns, input_vars=input_vars, interpolation=intrp)
-    model = NeuralNet(nn_arch=arch, input_var=input_vars, save_dir=arch_dir)
-    model.train(x_train, y_train, x_test, y_test)
+# if __name__ == '__main__':
+#     train_mns = [[2014, 6]]
+#     test_mns = [[2014, 7]]
+#     scale = 'maxmin'
+#     h = 5
+#     ignore = 'allnight'
+#     intrp = 100
+#     dl = DataLoader(scale=scale, ignore=ignore, grad_height=h, height=h)
+#     input_vars = dl.height_grad_vars+dl.ground_vars+['TIME']
+#     if ignore is None: ignore = 'none'
+#     arch = [len(input_vars), 100, 100, 1]
+#
+#     arch_dir = os.path.join(os.getcwd(), 'plots', 'new')+r'\\scale_'+scale +\
+#                                                         '_ignore'+ignore + '_intrp_'+str(intrp)+\
+#                                                         '_nn_'+to_string_nn(arch)
+#
+#     x_train, y_train, x_test, y_test = dl.load_data(train_mns, test_mns, input_vars=input_vars, interpolation=intrp)
+#     model = NeuralNet(nn_arch=arch, input_var=input_vars, save_dir=arch_dir)
+#     model.train(x_train, y_train, x_test, y_test)
 
 

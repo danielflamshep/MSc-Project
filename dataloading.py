@@ -4,19 +4,16 @@ import numpy as np
 from netCDF4 import Dataset
 
 
-def create_data():
+def get_pblh():
     path_to_files = r'E:\data\Mixing_Depths'
-    os.chdir(path_to_files)
     files = os.listdir(path_to_files)
     data_dict = {}
-    dates = np.zeros(len(files))
-    i = 0
+    dates = []
     for file in files:
-        data = open(file).readlines()
+        data = open(os.path.join(path_to_files, file)).readlines()
         date = data[6].split(', ')
         date = "".join(date[:3])
-        dates[i] == date
-        i += 1
+        dates.append(date)
 
         quality = data[25].split()[80]
         data_list = [data[i].strip("\n").split(', ') for i in range(37, len(data))]
@@ -32,9 +29,10 @@ def create_data():
                date, quality, time.shape[0], time[0], time[-1], mean_diff))
 
         data_dict[date+'PBLH'] = pblh
-        data_dict[date+'TIME'] = time
+        data_dict[date+'HR'] = time
         data_dict[date+'QUAL'] = quality
-    np.save('E:\Daniel\Documents\GitHub\MSc-Project\data\pblh', data_dict)
+    data_dict['dates'] = dates
+    np.save('pblh', data_dict)
 
 
 def string_with_zero(y):
@@ -109,12 +107,15 @@ def get_inputs():
 
     for var in vars.keys():
         d = data.variables[var][:]
+        print(var, np.mean(d))
         dsplit = np.split(d, day_idx)
         print(var, len(dsplit))
         var = vars[var]
         for i in range(len(dsplit)):
             data_dict[dates[i]+var] = dsplit[i]
+    data_dict['dates'] = dates
+    np.save('inputs', data_dict)
 
 
-sys.stdout = open("inputs_data.txt", "w")
 get_inputs()
+get_pblh()
