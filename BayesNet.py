@@ -41,9 +41,9 @@ def construct_nn(layer_sizes, L2_reg, noise_variance, nonlinearity=np.tanh):
 
 if __name__ == '__main__':
 
-
-    train_mns = [[2014, 9]]
-    test_mns = [[2014, 10]]
+    plot=True
+    train_mns = [[2012, 12]]
+    test_mns = [[2014, 9]]
     dl = DataLoader()
     ins = dl.train_vars
     x_train, y_train, x_test, y_test = dl.load_data(train_mns, test_mns, input_vars=ins)
@@ -53,12 +53,16 @@ if __name__ == '__main__':
     rbf = lambda x: np.exp(-x**2)
     relu = lambda x: np.maximum(x, 0.)
 
-    num_weights, predictions, logprob = construct_nn(layer_sizes=[x_dim, 36, 36, 1], L2_reg=0,
+    num_weights, predictions, logprob = construct_nn(layer_sizes=[x_dim, 15, 15, 1], L2_reg=0,
+
                                                      noise_variance=0.1, nonlinearity=rbf)
 
     log_posterior = lambda weights, t: logprob(weights,  x_train, y_train)
 
-    objective, gradient, unpack_params = bbvi(log_posterior, num_weights, num_samples=10)
+    objective, gradient, unpack_params = bbvi(log_posterior, num_weights, num_samples=3)
+
+    if plot:
+        fig, ax, bx = plotting.set_up(show=True)
 
     def callback(params, t, g):
         # Sample functions from posterior.
@@ -70,13 +74,17 @@ if __name__ == '__main__':
         outputs_test = predictions(sample_weights, x_test)
         p_train = outputs_train[:, :, 0].T
         p_test = outputs_test[:, :, 0].T
+        if plot:
+            plotting.plot_pblh(y_train, y_test, p_train, p_test, t, ax, bx)
+        # p_train = np.mean(p_train, axis=1)
+        # p_test = np.mean(p_test, axis=1)
         metric = np.mean(np.abs(y_test - p_test))
 
         if t % 10 == 0:
-            print("ITER {} MEAN PBLH DIFF {:.4f}".format(t, metric))
+            print("ITER {} MHD {:.4f}".format(t, metric))
         if metric < 0.15:
-            fig, ax, bx = plotting.set_up(show=False)
-            plotting.plot_pblh(y_train, y_test, p_train, p_test, t, ax, bx)
+            f, a, b = plotting.set_up(show=False)
+            plotting.plot_pblh(y_train, y_test, p_train, p_test, t, a, b)
             fname = 'iters {} MHD {:.4f}.jpg'.format(t, metric)
             save_file = os.path.join(os.getcwd(), 'plots', fname)
 
