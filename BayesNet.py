@@ -1,4 +1,4 @@
-
+import os
 import matplotlib.pyplot as plt
 import plotting
 import autograd.numpy as np
@@ -60,8 +60,6 @@ if __name__ == '__main__':
 
     objective, gradient, unpack_params = bbvi(log_posterior, num_weights, num_samples=10)
 
-    fig, ax, bx = plotting.set_up()
-
     def callback(params, t, g):
         # Sample functions from posterior.
 
@@ -72,12 +70,17 @@ if __name__ == '__main__':
         outputs_test = predictions(sample_weights, x_test)
         p_train = outputs_train[:, :, 0].T
         p_test = outputs_test[:, :, 0].T
-        plotting.plot_pblh(y_train, y_test, p_train, p_test, t, ax, bx)
+        metric = np.mean(np.abs(y_test - p_test))
 
-        if t % 10 == 0 :
-            metric = np.mean(np.abs(y_test - p_test))
-            print("ITER {} MEAN PBLH DIFF {}".format(t, metric))
+        if t % 10 == 0:
+            print("ITER {} MEAN PBLH DIFF {:.4f}".format(t, metric))
+        if metric < 0.15:
+            fig, ax, bx = plotting.set_up(show=False)
+            plotting.plot_pblh(y_train, y_test, p_train, p_test, t, ax, bx)
+            fname = 'iters {} MHD {:.4f}.jpg'.format(t, metric)
+            save_file = os.path.join(os.getcwd(), 'plots', fname)
 
+            plt.savefig(save_file)
 
 
     rs = npr.RandomState(0)

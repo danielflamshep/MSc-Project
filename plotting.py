@@ -13,11 +13,12 @@ def to_date(x):
     return when
 
 
-def set_up():
+def set_up(show=True):
     fig = plt.figure(figsize=(20, 12), facecolor='white')
     ax = fig.add_subplot(211, frameon=True)
     bx = fig.add_subplot(212, frameon=True)
-    plt.show(block=False)
+    if show:
+        plt.show(block=False)
     return fig, ax, bx
 
 
