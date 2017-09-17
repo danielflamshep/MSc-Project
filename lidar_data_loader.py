@@ -1,12 +1,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy import arange as ar
 from itertools import product
-from sklearn.gaussian_process import GaussianProcessRegressor as GPR
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-from sklearn.preprocessing import minmax_scale as MMS
-from util import list_dates, to_string
+from util import list_dates, date_string
 import seaborn as sns
 from neural_net import NeuralNet
 
@@ -16,15 +12,18 @@ class DataLoader:
         if vars is None:
             vars = ['P', 'QV', 'T', 'SI', 'U', 'HR']
         self.train_vars = vars
-        self.pblh_data = np.load(os.path.join(os.getcwd(),'pblh.npy'))[()]
+        self.pblh_data = np.load(os.path.join(os.getcwd(), 'pblh.npy'))[()]
         self.inputs_data = np.load(os.path.join(os.getcwd(), 'inputs.npy'))[()]
         self.pblh_dates = self.pblh_data['dates']
         self.inputs_dates = self.inputs_data['dates']
         self.scale = {'P': 1e3, 'QV': 1e2, 'T': 1e2, 'SI': 1e2, 'U': 1e2, 'HR': 1e1}
+        self.labels = None
 
     def compare_dates(self, train, test):
 
-        pblh_dates, inputs_dates = self.pblh_dates, self.inputs_dates
+        data = self.pblh_data
+        pblh_dates = self.pblh_dates
+        inputs_dates = self.inputs_dates
 
         real_train = []
         real_test = []
@@ -32,21 +31,27 @@ class DataLoader:
         print('training on :')
         for date in train:
             for date_with_day in pblh_dates:
-                if date_with_day in inputs_dates and date in date_with_day:
+                Q = data[date_with_day + 'QUAL']
+                if date_with_day in inputs_dates \
+                        and date in date_with_day \
+                        and int(Q) > 2:
                     real_train.append(date_with_day)
-                    print(date_with_day)
+                    print(date_with_day+'CC : '+Q)
 
         print('testing on :')
         for date in test:
             for date_with_day in pblh_dates:
-                if date_with_day in inputs_dates and date in date_with_day:
+                Q = data[date_with_day + 'QUAL']
+                if date_with_day in inputs_dates \
+                        and date in date_with_day \
+                        and int(Q) > 2:
                     real_test.append(date_with_day)
-                    print(date_with_day)
+                    print(date_with_day+'CC : '+Q)
 
         return real_train, real_test
 
     @staticmethod
-    def _compare_times(date, pblh, inputs, close=0.5):
+    def _compare_times(date, pblh, inputs, close=0.5, show_times=False):
 
         idx_pblh = []
         idx_inputs = []
@@ -63,31 +68,56 @@ class DataLoader:
                     idx_pblh.append(i)
                     break
 
-        print('For {} there are {} matches at times:'.format(date, len(idx_pblh)))
+        matches = len(idx_pblh)
+        print('{} has {} matches:'.format(date, matches))
+
         for i, j in zip(idx_pblh, idx_inputs):
-            print(pblh[i], inputs[j])
+            if show_times:
+                print(pblh[i], inputs[j])
 
-        return idx_pblh, idx_inputs
+        return idx_pblh, idx_inputs, matches
 
-    def _match_up_times(self, train, test):
+    def _match_up_times(self, train_dates, test_dates):
 
-        pblh_data, inputs_data, vars = self.pblh_data, self.inputs_data, self.train_vars
+        inputs_data = self.inputs_data
+        pblh_data = self.pblh_data
+
+        vars = self.train_vars
         scale = self.scale
-        data = {}
-        for date in train + test:
+
+        data, labels = {}, {}
+        train_labels, test_labels = [], []
+        train_obs, test_obs = [], []
+
+        for date in train_dates + test_dates:  # date is YYYYMM
             key = date + 'HR'
-            idx_pblh, idx_inputs = self._compare_times(date, pblh_data[key], inputs_data[key])
+            idx_pblh, idx_inputs, matches = self._compare_times(date, pblh_data[key],
+                                                                      inputs_data[key])
             data[date + 'PBLH'] = pblh_data[date + 'PBLH'][idx_pblh]
+
+            if date in train_dates:
+                train_labels.append(date[6:])
+                train_obs.append(matches)
+            else:
+                test_labels.append(date[6:])
+                test_obs.append(matches)
 
             for var in vars:
                 data[date + var] = inputs_data[date + var][idx_inputs]/scale[var]
+
+        labels['train_labels'] = train_labels
+        labels['test_labels'] = test_labels
+        labels['train_ticks'] = [sum(train_obs[:i]) for i in range(len(train_obs))]
+        labels['test_ticks'] = [sum(test_obs[:i]) for i in range(len(test_obs))]
+
+        self.data = data
+        self.labels = labels
 
         return data
 
     def load_data(self, train, test, input_vars=None):
         # train and test of form train = [[2013,5,6,7],[2014,5,6,7]]
 
-        vars = self.train_vars
         train_dates = list_dates(train)
         test_dates = list_dates(test)
 
@@ -106,8 +136,8 @@ class DataLoader:
             data['train' + var] = np.concatenate(train_list)
             data['test' + var] = np.concatenate(test_list)
 
-        train_inputs_list = [data['train' + var][:, None] for var in input_vars]
-        test_inputs_list = [data['test' + var][:, None] for var in input_vars]
+        train_inputs_list = [data['train'+var][:, None] for var in input_vars]
+        test_inputs_list = [data['test'+var][:, None] for var in input_vars]
 
         y_train_list = [data[date + 'PBLH'][:, None] for date in train_dates]
         y_test_list = [data[date + 'PBLH'][:, None] for date in test_dates]
@@ -117,6 +147,9 @@ class DataLoader:
 
         x_test = np.concatenate(test_inputs_list, axis=1)
         y_test = np.concatenate(y_test_list)
+
+        self.labels['train'] = 'Training on '+date_string(train)
+        self.labels['test'] = 'Testing on '+date_string(test)
 
         return x_train, y_train, x_test, y_test
 
@@ -128,7 +161,7 @@ class DataLoader:
         if plot_dir:
             save_dir = plot_dir
         else:
-            plot_dir = os.path.join(os.getcwd(), 'plots', 'timeseries')
+            plot_dir = os.path.join(os.getcwd(), 'plots', 'timeseries')  # only on home comp
             folder = self.scale_type + '_scale_' + str(num)
             save_dir = os.path.join(plot_dir, folder)
 
@@ -163,13 +196,13 @@ class DataLoader:
 if __name__ == '__main__':
     vars = ['PBLH']
     DL = DataLoader()
-    max=np.mean
+    max = np.mean
     # DL.plot_time_series(dates=[[2014, 6]], plot_vars=vars, num=1)
     x_train, y_train, x_test, y_test = DL.load_data(train=[[2014, 9]], test=[[2014, 10]])
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
-    print(max(x_train[:,0]), max(x_train[:,1]) , max(x_train[:,2]), max(x_train[:,3]))
+    print(max(x_train[:, 0]), max(x_train[:, 1]), max(x_train[:, 2]), max(x_train[:, 3]))
     vars = DL.train_vars
-    arch = [len(vars), 6, 1]
+    arch = [len(vars), 150, 150, 1]
     save_dir = os.path.join(os.getcwd(), 'plots')
-    model = NeuralNet(nn_arch=arch, input_var=vars, save_dir=save_dir)
+    model = NeuralNet(nn_arch=arch, input_var=vars, save_dir=save_dir, labels=DL.labels)
     model.train(x_train, y_train, x_test, y_test)

@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import os
 import numpy as np
 from numpy import arange as ar
 
@@ -7,49 +8,100 @@ def pblh_diff(y,p): return np.abs(y-p)
 
 
 def to_date(x):
-    when=''
+    when = ''
     for d in x:
         when += ' YR: ' + str(d[0])+' MN ' + ''.join('0'+str(d[i]) for i in range(1, len(d)))
     return when
 
 
 def set_up(show=True):
-    fig = plt.figure(figsize=(20, 12), facecolor='white')
+    fig = plt.figure(figsize=(20, 8), facecolor='white')
     ax = fig.add_subplot(211, frameon=True)
     bx = fig.add_subplot(212, frameon=True)
+
     if show:
         plt.show(block=False)
-    return fig, ax, bx
+
+    axes = (ax, bx)
+
+    return fig, axes
 
 
-def plot_pblh(y_train, y_test,  p_train, p_test, t, ax, bx):
+def plot_pblh(d, axes, draw=False, save=False):
+
+    labels = d.labels
+
+    ax, bx = axes
 
     ax.cla()
     bx.cla()
 
+    train_labels = labels['train_labels']
+    test_labels = labels['test_labels']
+    x_train = labels['train_ticks']
+    x_test = labels['test_ticks']
+
+    labels_dict = {'fontname': 'courier new', 'weight': 'bold', 'size': 25}
+
     # PLOT TRAINING TIME SERIES
-    ts_train = ar(len(y_train))[:, None]
-    #print(ts_train.shape)# TIME SERIES INPUTS
-    ax.plot(ts_train, y_train, color='b', marker='.')
-    ax.plot(ts_train, p_train, color='g', marker='.')
-    ax.plot(ts_train, y_train, color='b', lw=1)
-    ax.plot(ts_train, p_train, color='g', lw=1)
-    ax.set_ylim([-1, 3])
-    ax.set_ylabel('PBLH in km')
-    ax.set_title('training data : ')
+    ts_train = ar(len(d.y_train))[:, None]
+
+    ax.plot(ts_train, d.y_train, 'b.', ms=12)
+    ax.plot(ts_train, d.p_train, 'g.', ms=12, label='NN PBL heights')
+
+    # ax.plot(ts_train, y_train, color='b', lw=1)
+    # ax.plot(ts_train, p_train, color='g', lw=1)
+
+    # ax.set_ylim([0, 2])
+    ax.set_ylabel('PBL heights (km)', labels_dict)
+    ax.set_xlabel('Days in Training Month(s):'+labels['train'][11:], labels_dict)
+    ax.set_title(labels['train'], labels_dict)
 
     # PLOT TESTING TIME SERIES
-    ts_test = ar(len(y_test))[:, None]
-    bx.plot(ts_test, y_test, color='b', marker='.')
-    bx.plot(ts_test, p_test, color='g', marker='.')
-    bx.plot(ts_test, y_test, color='b', lw=1)
-    bx.plot(ts_test, p_test, color='g', lw=1)
-    bx.set_ylim([-1, 3])
-    bx.set_ylabel('PBLH in km')
-    bx.set_title('test data : ')
-    plt.draw()
-    plt.pause(1.0 / 60.0)
 
+    ts_test = ar(len(d.y_test))[:, None]
+    bx.plot(ts_test, d.y_test,  'b.', ms=12,  label='MiniMPL PBL heights')
+    bx.plot(ts_test, d.p_test,  'g.', ms=12)
+
+    # bx.plot(ts_test, y_test, color='b', lw=1)
+    # bx.plot(ts_test, p_test, color='g', lw=1)
+
+    # bx.set_ylim([0, 2])
+    bx.set_ylabel('PBL heights (km)', labels_dict)
+    bx.set_xlabel('Days in Testing Month(s):'+labels['test'][10:], labels_dict)
+    bx.set_title(labels['test'], labels_dict)
+
+    ticks_dict = labels_dict
+    ticks_dict['size'] = 18
+
+    ax.set_xticks(x_train)
+    ax.set_xticklabels(train_labels, ticks_dict)
+
+    bx.set_xticks(x_test)
+    bx.set_xticklabels(test_labels, ticks_dict)
+
+    ax.grid('off', axis='y')
+    bx.grid('off', axis='y')
+
+    anchor = (0., 1., 1., .0)
+
+    bx.legend(bbox_to_anchor=anchor, loc=3, ncol=2, frameon=True,
+              prop={'family': 'courier new', 'weight': 'bold', 'size': 20})
+
+    ax.legend(bbox_to_anchor=(1., -0.15), ncol=2, frameon=True,
+              prop={'family': 'courier new', 'weight': 'bold', 'size': 20})
+
+    plt.tight_layout()
+    ax.tick_params(axis='y', labelsize=15)
+    bx.tick_params(axis='y', labelsize=15)
+
+    if draw:
+        plt.draw()
+        plt.pause(1.0 / 60.0)
+
+    if save:
+        path = d.mk_dir()
+        plt.savefig(path, bbox_inches='tight')
 
 
 def plot_pblh_diff(y_train, y_test, p_train, p_test, t, ax, bx):

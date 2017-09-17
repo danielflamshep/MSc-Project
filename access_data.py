@@ -1,8 +1,9 @@
+''' Use To access server with data'''
 import paramiko
 
 
 class DataConnector:
-    def __init__(self, LAT=44.75, LON=-80.3125, LVL=None, version=2,
+    def __init__(self, pswd, LAT=44.75, LON=-80.3125, LVL=None, version=2,
                  years=['2013','2014'], months=['05','06','07']):
         if LVL is None:
             self.levels = [str(x) for x in range(15)]
@@ -12,7 +13,7 @@ class DataConnector:
                      self.levels[0] + '-' + self.levels[-1] + 'vers' + str(version)+'.npy'
         self.client = paramiko.SSHClient()
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.client.connect('animus1.atmosp.physics.utoronto.ca', 22, username='dflamshe', password='zinho102')
+        self.client.connect('animus1.atmosp.physics.utoronto.ca', 22, username='dflamshe', password=pswd)
         print('connected to animus1')
 
     def transfer(self, remote='/home/dflamshe/data_processing.py',
@@ -37,5 +38,6 @@ class DataConnector:
 
 
 if __name__ == '__main__':
-    d=DataConnector()
+    pswd = ""
+    d=DataConnector(pswd)
     d.download()

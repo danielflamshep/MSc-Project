@@ -1,7 +1,8 @@
+""" Use to load the PBL MiniMPL depths and TCCOON weather data"""
 import os
-import sys
 import numpy as np
 from netCDF4 import Dataset
+from util import to_date_mnday as to_date
 
 
 def get_pblh():
@@ -33,38 +34,6 @@ def get_pblh():
         data_dict[date+'QUAL'] = quality
     data_dict['dates'] = dates
     np.save('pblh', data_dict)
-
-
-def string_with_zero(y):
-    if y > 9:
-        return str(y)
-    else:
-        return '0' + str(y)
-
-
-def to_date(num_day, year):
-    if year % 4 == 0:
-        days  = [31, 29, 31, 30,  31,  30,  31,  31,  30,  31,  30,  31]
-        sdays = [31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366]
-    else:
-        days  = [31, 28, 31, 30,  31,  30,  31,  31,  30,  31,  30,  31]
-        sdays = [31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
-
-    for i in range(len(days)):
-        if num_day < sdays[i]:
-            #print(i, sdays[i - 1])
-            if num_day < 31:
-                day = num_day
-            else:
-                day = num_day - sdays[i-1]
-            month = i+1
-            break
-        elif num_day == sdays[i]:
-            day = days[i]
-            month = i+1
-            break
-
-    return string_with_zero(month)+string_with_zero(day)
 
 
 def get_inputs():
@@ -116,6 +85,6 @@ def get_inputs():
     data_dict['dates'] = dates
     np.save('inputs', data_dict)
 
-
-get_inputs()
-get_pblh()
+if __name__ == "__main__":
+    get_inputs()
+    get_pblh()
